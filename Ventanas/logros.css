@@ -1,0 +1,41 @@
+body {
+    background: #ccb286aa;
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 3px;
+
+
+}
+
+.decoracion{
+  background-color: #e77314; /* Gris claro */
+  width: 100%;             /* Ajusta el tamaño según tus necesidades */
+  height: 120px;            /* Ajusta el tamaño según tus necesidades */
+  border-radius: 0 0 15px 15px; /* Esquinas inferiores redondeadas */
+            /* Opcional: Agrega un borde para ver mejor los estilos */
+  border: 1px solid #ffffff; 
+}
+
+.center {
+    text-align: center;
+}
+
+h1{
+  color: aquamarine;
+  font-size: 2.7rem;
+  padding: 1px;
+  text-shadow: 1px 1px 2px black, 0 0 25px rgb(210, 210, 252), 0 0 5px rgb(199, 175, 255);
+}
+
+.texto-titular{
+  color: rgb(255, 255, 255);
+  text-align: center;         /*texto centro, izqwuiera o derecha*/
+  margin: 20px;              /*Que tan abajo o separado de las orillas*/
+  font-size: 50px;           /*Q ue tan grande la letra*/
+}
+
+.logro{
+    text-align: center;
+   
+}
+

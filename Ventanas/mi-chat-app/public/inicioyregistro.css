@@ -1,0 +1,84 @@
+body {
+    background-image: url('https://img.freepik.com/premium-vector/abstract-yellow-orange-background-with-wavy-shapes-suitable-website-flyers-posters_884160-892.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    font-family: "Lucida Console", "Courier New", monospace;
+    width: 400px;
+    background-color: #462b01b0; 
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.662);
+}
+
+.login-form {
+    display: block;
+    
+}
+
+.signup-form {
+    display: none;
+}
+
+label {
+    
+    color: #ff6932; /* Cambia el color del texto arriba de los campos */
+    font-size: 14px; /* Tamaño de fuente */
+    margin-bottom: 8px; /* Espacio entre el texto y el campo */
+    display: block; /* Hace que cada etiqueta se muestre en una línea separada */
+}
+
+h2 {
+    color: #ff6932; /* Color cyan */
+    margin-bottom: 20px;
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="date"],
+button {
+    width: 90%;
+    padding: 10px;
+    margin-bottom: 13px;
+    border: none;
+    border-radius: 5px;
+}
+
+button {
+    background-color: #ff6932; /* Color rosa profundo */
+    color: rgb(0, 0, 0);
+    cursor: pointer;
+}
+
+.signup-link {
+    color: #ff6932; /* Color rosa claro */
+    text-decoration: none;
+}
+
+.signup-link:hover {
+    text-decoration: underline;
+    color: #f3fff6;
+}
+
+.login-link {
+    color: #ff6932; /* Color rosa claro */
+    text-decoration: none;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+    color: #f3fff6;
+}
+

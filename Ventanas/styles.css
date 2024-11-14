@@ -1,0 +1,84 @@
+body {
+    background-color:#e77314; /* Fondo oscuro */
+    color: #ffffff;
+}
+
+.video-call-container {
+    background-color:#ccb286aa;  /* Fondo oscuro de la llamada */
+    width: 400px; /* Ancho fijo del contenedor */
+    height: 500px; /* Altura fija del contenedor */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.profile-section {
+    margin-bottom: 20px;
+}
+
+.profile-img {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #ffffff;
+}
+
+.profile-name {
+    margin-top: 10px;
+}
+
+.buttons-section {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 50px; /* Aumenta la separación entre los botones */
+}
+
+
+.btn {
+    width: 80px;
+    height: 80px;
+    font-size: 24px;
+    border-radius: 50%;
+    margin: 10px;
+}
+
+.answer-btn {
+    background-color: #28a745; /* Verde para contestar */
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    animation: pulse 3s infinite; /* Aplicar la animación de pulso */
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    33% {
+        transform: scale(1.2);
+    }
+    66% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.answer-btn i {
+    transition: transform 0.3s ease;
+}
+
+.answer-btn:hover i {
+    transform: translateX(30px);
+}
+
+.hangup-btn i {
+    color: #ffffff;
+}
