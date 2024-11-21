@@ -243,7 +243,22 @@ app.post('/api/mensajes', (req, res) => {
 });
 
 
+app.get('/desencriptar-mensaje/:idMensaje', (req, res) => {
+    const idMensaje = req.params.id_Mensaje;
 
+    // Llamada al procedimiento almacenado sp_desencriptarmensaje
+    db.query('CALL sp_desencriptarmensaje(?)', [id_Mensaje], (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Error al desencriptar el mensaje' });
+        }
+        
+        // El resultado contiene el mensaje desencriptado
+        const mensajeDesencriptado = results[0][0].contenido_desencriptado;
+        
+        // Devolver el mensaje desencriptado al cliente
+        res.json({ textoDesencriptado: mensajeDesencriptado });
+    });
+});
 
 app.post('/api/grupos', upload.single('foto'), (req, res) => {
     const { nombre, miembros, creadorId } = req.body; // Obtener los datos del cuerpo de la solicitud

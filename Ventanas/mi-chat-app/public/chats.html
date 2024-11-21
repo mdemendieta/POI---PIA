@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +11,9 @@
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
 </head>
+
 <body>
-    
+
     <div class="container">
         <!-- Barra superior -->
         <header class="header">
@@ -35,10 +37,12 @@
                                     </ul>
                                 </div>
 
-                                <button id="rewards-button" class="btn btn-outline-secondary rewards-button" title="Logros">
+                                <button id="rewards-button" class="btn btn-outline-secondary rewards-button"
+                                    title="Logros">
                                     <i class="fa fa-star"></i>
                                 </button>
-                                <button id="options-button" class="btn btn-outline-secondary options-button" title="Opciones">
+                                <button id="options-button" class="btn btn-outline-secondary options-button"
+                                    title="Opciones">
                                     <i class="fa fa-ellipsis-v"></i>
                                 </button>
                                 <div id="options-menu" class="dropdown-menu-options">
@@ -67,7 +71,8 @@
                             <div class="row">
                                 <div class="col-lg-6">
                                     <a href="javascript:void(0);" data-toggle="modal" data-target="#view_info">
-                                        <img id="contact-avatar" src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                                        <img id="contact-avatar"
+                                            src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
                                     </a>
                                     <div class="chat-about">
                                         <h6 id="contact-name" class="m-b-0">Javier Chávez</h6>
@@ -78,7 +83,8 @@
                                     <button class="btn btn-outline-secondary email-button ml-2" title="Correo">
                                         <i class="fa fa-envelope"></i>
                                     </button>
-                                    <button id="videollamada" class="btn btn-outline-secondary call-button" title="Videollamada">
+                                    <button id="videollamada" class="btn btn-outline-secondary call-button"
+                                        title="Videollamada">
                                         <i class="fa fa-video-camera"></i>
                                     </button>
                                 </div>
@@ -108,15 +114,18 @@
                         </div>
                         <div class="chat-message clearfix">
                             <div class="input-group">
-                                <input type="text" class="form-control message-input" placeholder="Escribe tu mensaje aquí...">
-                                <div class="input-group-append d-flex align-items-center justify-content-end icon-group">
+                                <input type="text" class="form-control message-input"
+                                    placeholder="Escribe tu mensaje aquí...">
+                                <div
+                                    class="input-group-append d-flex align-items-center justify-content-end icon-group">
                                     <button class="btn btn-outline-secondary send-button" title="Enviar">
                                         <i class="fa fa-send"></i>
                                     </button>
                                     <button class="btn btn-outline-secondary emoji-button" title="Audio">
                                         <i class="fa fa-microphone"></i>
                                     </button>
-                                    <button id="attach-button" class="btn btn-outline-secondary attach-button" title="Adjuntar">
+                                    <button id="attach-button" class="btn btn-outline-secondary attach-button"
+                                        title="Adjuntar">
                                         <i class="fa fa-paperclip"></i>
                                     </button>
                                     <div id="attach-menu" class="dropdown-menu-attach">
@@ -183,7 +192,7 @@
             </div>
         </div>
     </div>
-    
+
 
     <script>
         let currentContactId = null; // Variable para almacenar el ID del contacto seleccionado
@@ -193,14 +202,14 @@
         function cargarContactos() {
             const id_Usuario_Sesion = localStorage.getItem('userID');
 
-            $.get(`/api/contactos-y-grupos/${id_Usuario_Sesion}`, function(data) {
+            $.get(`/api/contactos-y-grupos/${id_Usuario_Sesion}`, function (data) {
                 const listaContactos = $('.chat-list');
                 listaContactos.empty(); // Limpiar la lista existente
-            
+
                 // Mostrar contactos
                 data.contactos.forEach(contacto => {
                     const statusClass = contacto.Estado === "En línea" ? "online" : "offline";
-                
+
                     const contactElement = $(`
                         <li class="clearfix" data-id="${contacto.id_Usuario}" data-nombre="${contacto.Nombre} ${contacto.Apellido}" data-foto="${contacto.Foto}" data-estado="${contacto.Estado}" data-esgrupo="false">
                             <img src="${contacto.Foto}" alt="avatar">
@@ -212,20 +221,20 @@
                             </div>
                         </li>
                     `);
-                    
-                    contactElement.on('click', function() {
+
+                    contactElement.on('click', function () {
                         const contactId = $(this).data('id');
                         const contactName = $(this).data('nombre');
                         const contactFoto = $(this).data('foto');
                         const contactStatus = $(this).data('estado');
                         const esGrupo = $(this).data('esgrupo');
-                    
+
                         cargarConversacion(contactId, contactName, contactFoto, contactStatus, id_Usuario_Sesion, esGrupo);
                     });
-                
+
                     listaContactos.append(contactElement);
                 });
-            
+
                 // Mostrar grupos
                 data.grupos.forEach(grupo => {
                     const groupElement = $(`
@@ -237,14 +246,14 @@
                             </div>
                         </li>
                     `);
-                    
-                    groupElement.on('click', function() {
+
+                    groupElement.on('click', function () {
                         const groupId = $(this).data('id');
                         const groupName = $(this).data('nombre');
                         const groupFoto = $(this).data('foto') ? `/fotosGrupos/${$(this).data('foto')}` : null;
                         const groupDescription = $(this).data("Grupo") || "Grupo";
                         const esGrupo = $(this).data('esgrupo'); // Esto ya se establece como 'true'
-                    
+
                         cargarConversacionGrupo(groupId, groupName, groupFoto, groupDescription, id_Usuario_Sesion, esGrupo);
                     });
 
@@ -254,33 +263,33 @@
         }
 
         function cargarConversacionGrupo(groupId, groupName, groupFoto, groupStatus, id_Usuario_Sesion) {
-    currentContactId = groupId; // Actualizar el ID del grupo actual
-    esGrupo = true; // Establecer esGrupo como true
-    console.log("Usuario en sesión:", id_Usuario_Sesion);
-    
-    // Actualizar encabezado del chat con la información del grupo seleccionado
-    $('#contact-name').text(groupName);
+            currentContactId = groupId; // Actualizar el ID del grupo actual
+            esGrupo = true; // Establecer esGrupo como true
+            console.log("Usuario en sesión:", id_Usuario_Sesion);
 
-    if (groupFoto) {
-        $('#contact-avatar').attr('src', groupFoto);
-    } else {
-        $('#contact-avatar').attr('src', '/ruta_por_defecto/para_foto_grupo.png');
-    }
+            // Actualizar encabezado del chat con la información del grupo seleccionado
+            $('#contact-name').text(groupName);
 
-    $('#contact-status').text(groupStatus);
-    
-    // Llamada AJAX para cargar la conversación del grupo
-    $.get(`/api/conversacion/${groupId}?userID=${id_Usuario_Sesion}&esGrupo=true`, function(mensajes) {
-        const chatHistory = $('.chat-history ul');
-        chatHistory.empty();
-    
-        mensajes.forEach(mensaje => {
-            const messageClass = mensaje.id_Usuario_Emisor != id_Usuario_Sesion ? 'my-message' : 'other-message float-right';
-            const alignmentClass = mensaje.id_Usuario_Emisor != id_Usuario_Sesion ? 'message-data' : 'message-data-my text-right';
-        
-            // Agregar el nombre y la foto del emisor solo si no es el usuario en sesión
-            if (mensaje.id_Usuario_Emisor != id_Usuario_Sesion) {
-                chatHistory.append(`
+            if (groupFoto) {
+                $('#contact-avatar').attr('src', groupFoto);
+            } else {
+                $('#contact-avatar').attr('src', '/ruta_por_defecto/para_foto_grupo.png');
+            }
+
+            $('#contact-status').text(groupStatus);
+
+            // Llamada AJAX para cargar la conversación del grupo
+            $.get(`/api/conversacion/${groupId}?userID=${id_Usuario_Sesion}&esGrupo=true`, function (mensajes) {
+                const chatHistory = $('.chat-history ul');
+                chatHistory.empty();
+
+                mensajes.forEach(mensaje => {
+                    const messageClass = mensaje.id_Usuario_Emisor != id_Usuario_Sesion ? 'my-message' : 'other-message float-right';
+                    const alignmentClass = mensaje.id_Usuario_Emisor != id_Usuario_Sesion ? 'message-data' : 'message-data-my text-right';
+
+                    // Agregar el nombre y la foto del emisor solo si no es el usuario en sesión
+                    if (mensaje.id_Usuario_Emisor != id_Usuario_Sesion) {
+                        chatHistory.append(`
                     <li class="clearfix">
                         <div class="${alignmentClass}">
                             <span class="message-data-time">${mensaje.hora}</span>
@@ -291,9 +300,9 @@
                         </div>
                     </li>
                 `);
-            } else {
-                // Mensaje del usuario en sesión sin nombre ni foto
-                chatHistory.append(`
+                    } else {
+                        // Mensaje del usuario en sesión sin nombre ni foto
+                        chatHistory.append(`
                     <li class="clearfix">
                         <div class="${alignmentClass}">
                             <span class="message-data-time">${mensaje.hora}</span>
@@ -301,51 +310,83 @@
                         <div class="message ${messageClass}">${mensaje.texto}</div>
                     </li>
                 `);
+                    }
+                });
+
+                scrollToBottom();
+            });
+        }
+        //
+        function cargarConversacion(contactId, contactName, contactFoto, contactStatus, id_Usuario_Sesion, encriptacion) {
+            currentContactId = contactId; // Actualizar el ID del contacto actual
+            esGrupo = false; // Establecer esGrupo como false
+            console.log("Usuario en sesión:", id_Usuario_Sesion);
+
+            // Actualizar encabezado del chat con la información del contacto seleccionado
+            $('#contact-name').text(contactName);
+
+            if (contactFoto) {
+                $('#contact-avatar').attr('src', contactFoto);
+            } else {
+                $('#contact-avatar').attr('src', '/ruta_por_defecto/para_foto_grupo.png');
             }
-        });
-    
-        scrollToBottom();
-    });
-}
 
-function cargarConversacion(contactId, contactName, contactFoto, contactStatus, id_Usuario_Sesion) {
-    currentContactId = contactId; // Actualizar el ID del contacto actual
-    esGrupo = false; // Establecer esGrupo como false
-    console.log("Usuario en sesión:", id_Usuario_Sesion);
-    
-    // Actualizar encabezado del chat con la información del contacto seleccionado
-    $('#contact-name').text(contactName);
+            $('#contact-status').text(contactStatus);
 
-    if (contactFoto) {
-        $('#contact-avatar').attr('src', contactFoto);
-    } else {
-        $('#contact-avatar').attr('src', '/ruta_por_defecto/para_foto_grupo.png');
-    }
-    
-    $('#contact-status').text(contactStatus);
-    
-    // Llamada AJAX para cargar la conversación del contacto
-    $.get(`/api/conversacion/${contactId}?userID=${id_Usuario_Sesion}&esGrupo=false`, function(mensajes) {
-        const chatHistory = $('.chat-history ul');
-        chatHistory.empty();
-    
-        mensajes.forEach(mensaje => {
-            const messageClass = mensaje.id_Usuario_Emisor === contactId ? 'my-message' : 'other-message float-right';
-            const alignmentClass = mensaje.id_Usuario_Emisor === contactId ? 'message-data' : 'message-data-my text-right';
-        
-            chatHistory.append(`
-                <li class="clearfix">
-                    <div class="${alignmentClass}">
-                        <span class="message-data-time">${mensaje.hora}</span>
-                    </div>
-                    <div class="message ${messageClass}">${mensaje.texto}</div>
-                </li>
-            `);
-        });
-    
-        scrollToBottom();
-    });
-}
+            // Llamada AJAX para cargar la conversación del contacto
+            $.get(`/api/conversacion/${contactId}?userID=${id_Usuario_Sesion}&esGrupo=false`, function (mensajes) {
+                const chatHistory = $('.chat-history ul');
+                chatHistory.empty();
+
+                mensajes.forEach(mensaje => {
+                    const messageClass = mensaje.id_Usuario_Emisor === contactId ? 'my-message' : 'other-message float-right';
+                    const alignmentClass = mensaje.id_Usuario_Emisor === contactId ? 'message-data' : 'message-data-my text-right';
+
+                    // Verificar si el mensaje está encriptado
+                    if (mensaje.encriptacion === 1) {
+                        // Aquí se hace la llamada para desencriptar el mensaje. 
+                        // Esto puede implicar una llamada a una API de backend que llame el procedimiento almacenado 'sp_desencriptarmensaje'.
+                        // Ejemplo usando fetch (suponiendo que tienes un endpoint en tu servidor que te devuelva el mensaje desencriptado):
+                        fetch('/desencriptar-mensaje', {
+                            method: 'POST',
+                            body: JSON.stringify({ idMensaje: mensaje.idMensaje }),
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                // Una vez que se obtenga el mensaje desencriptado, se inserta en el chat
+                                const mensajeDesencriptado = data.textoDesencriptado;
+                                chatHistory.append(`
+                        <li class="clearfix">
+                            <div class="${alignmentClass}">
+                                <span class="message-data-time">${mensaje.hora}</span>
+                            </div>
+                            <div class="message ${messageClass}">${mensajeDesencriptado}</div>
+                        </li>
+                    `);
+                            })
+                            .catch(error => {
+                                console.error('Error al desencriptar el mensaje:', error);
+                            });
+                    } else {
+                        // Si el mensaje no está encriptado, lo mostramos tal cual
+                        chatHistory.append(`
+                    <li class="clearfix">
+                        <div class="${alignmentClass}">
+                            <span class="message-data-time">${mensaje.hora}</span>
+                        </div>
+                        <div class="message ${messageClass}">${mensaje.texto}</div>
+                    </li>
+                `);
+                    }
+                });
+
+
+                scrollToBottom();
+            });
+        }
 
 
         // Establecer la conexión con Socket.io
@@ -357,60 +398,60 @@ function cargarConversacion(contactId, contactName, contactFoto, contactStatus, 
         const username = 'Juan Pérez'; // Cambia 'Juan Pérez' por un nombre de usuario real si es necesario
 
         // Llamar a la función para cargar contactos al cargar la página
-        $(document).ready(function() {
+        $(document).ready(function () {
             cargarContactos();
         });
 
 
         // Función para manejar el envío de mensajes
         function sendMessage() {
-    const inputField = document.querySelector('.message-input');
-    const message = inputField.value.trim();
-    const id_Usuario_Emisor = localStorage.getItem('userID');
-    const id_Grupo = esGrupo ? currentContactId : null;
-    const id_Usuario_Receptor = !esGrupo ? currentContactId : null;
+            const inputField = document.querySelector('.message-input');
+            const message = inputField.value.trim();
+            const id_Usuario_Emisor = localStorage.getItem('userID');
+            const id_Grupo = esGrupo ? currentContactId : null;
+            const id_Usuario_Receptor = !esGrupo ? currentContactId : null;
 
-    if (message) {
-        inputField.value = '';
-        const dataToSend = {
-            id_Usuario_Emisor,
-            Contenido: message,
-            id_Usuario_Receptor,
-            id_Grupo,
-            nombreEmisor: localStorage.getItem('nombreUsuario'), // Asegúrate de que este valor esté disponible
-            fotoEmisor: localStorage.getItem('fotoUsuario') // Asegúrate de que este valor esté disponible
-        };
+            if (message) {
+                inputField.value = '';
+                const dataToSend = {
+                    id_Usuario_Emisor,
+                    Contenido: message,
+                    id_Usuario_Receptor,
+                    id_Grupo,
+                    nombreEmisor: localStorage.getItem('nombreUsuario'), // Asegúrate de que este valor esté disponible
+                    fotoEmisor: localStorage.getItem('fotoUsuario') // Asegúrate de que este valor esté disponible
+                };
 
-        $.post('/api/mensajes', dataToSend, function(data) {
-            scrollToBottom();
-            const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-            socket.emit('nuevo mensaje', { ...dataToSend, hora });
-        }).fail(function() {
-            alert("Error al enviar el mensaje.");
+                $.post('/api/mensajes', dataToSend, function (data) {
+                    scrollToBottom();
+                    const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                    socket.emit('nuevo mensaje', { ...dataToSend, hora });
+                }).fail(function () {
+                    alert("Error al enviar el mensaje.");
+                });
+            }
+        }
+
+
+
+
+
+        // Abrir el modal de creación de grupo al hacer clic en "Crear grupo"
+        $(document).on('click', '#plus-menu li:first-child', function () {
+            $('#crearGrupoModal').modal('show');
+            cargarContactosParaGrupo();
         });
-    }
-}
 
+        // Función para cargar contactos en el modal de creación de grupo
+        function cargarContactosParaGrupo() {
+            const id_Usuario_Sesion = localStorage.getItem('userID');
 
+            $.get(`/api/contactos/${id_Usuario_Sesion}`, function (contactos) {
+                const listaContactosGrupo = $('#contactosGrupo');
+                listaContactosGrupo.empty();
 
-
-    
-    // Abrir el modal de creación de grupo al hacer clic en "Crear grupo"
-    $(document).on('click', '#plus-menu li:first-child', function () {
-      $('#crearGrupoModal').modal('show');
-      cargarContactosParaGrupo();
-    });
-    
-    // Función para cargar contactos en el modal de creación de grupo
-    function cargarContactosParaGrupo() {
-      const id_Usuario_Sesion = localStorage.getItem('userID');
-    
-      $.get(`/api/contactos/${id_Usuario_Sesion}`, function(contactos) {
-        const listaContactosGrupo = $('#contactosGrupo');
-        listaContactosGrupo.empty();
-    
-        contactos.forEach(contacto => {
-          const contactCheckbox = $(`
+                contactos.forEach(contacto => {
+                    const contactCheckbox = $(`
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="${contacto.id_Usuario}" id="contact_${contacto.id_Usuario}">
               <label class="form-check-label" for="contact_${contacto.id_Usuario}">
@@ -418,54 +459,54 @@ function cargarConversacion(contactId, contactName, contactFoto, contactStatus, 
               </label>
             </div>
           `);
-          listaContactosGrupo.append(contactCheckbox);
-        });
-      });
-    }
-    
-    // Enviar el formulario de creación de grupo
-    $('#crearGrupoForm').on('submit', function(event) {
-    event.preventDefault();
-
-    const nombreGrupo = $('#nombreGrupo').val();
-    const contactosSeleccionados = $('#contactosGrupo input:checked').map(function() {
-        return $(this).val();
-    }).get();
-
-    const creadorId = localStorage.getItem('userID'); // Obtén el ID del creador
-    const fotoGrupo = $('#fotoGrupo')[0].files[0]; // Obtén el archivo seleccionado
-
-    // Validación de los campos
-    if (!nombreGrupo || contactosSeleccionados.length === 0 || !creadorId) {
-        alert('Por favor, ingresa un nombre para el grupo, selecciona al menos un contacto y asegúrate de que estés logueado.');
-        return;
-    }
-
-    // Crea un objeto FormData para enviar el archivo y los datos del grupo
-    const formData = new FormData();
-    formData.append('nombre', nombreGrupo);
-    formData.append('miembros', JSON.stringify(contactosSeleccionados));
-    formData.append('creadorId', creadorId);
-    if (fotoGrupo) {
-        formData.append('foto', fotoGrupo); // Agrega la foto al FormData
-    }
-
-    // Aquí harías la llamada al backend para crear el grupo
-    $.post({
-        url: '/api/grupos',
-        data: formData,
-        processData: false, // Evita que jQuery procese los datos
-        contentType: false, // Evita que jQuery establezca el tipo de contenido
-        success: function(response) {
-            alert('Grupo creado exitosamente');
-            $('#crearGrupoModal').modal('hide');
-        },
-        error: function(jqXHR) {
-            const errorMessage = jqXHR.responseJSON ? jqXHR.responseJSON.error : "Error al crear el grupo.";
-            alert(errorMessage);
+                    listaContactosGrupo.append(contactCheckbox);
+                });
+            });
         }
-    });
-});
+
+        // Enviar el formulario de creación de grupo
+        $('#crearGrupoForm').on('submit', function (event) {
+            event.preventDefault();
+
+            const nombreGrupo = $('#nombreGrupo').val();
+            const contactosSeleccionados = $('#contactosGrupo input:checked').map(function () {
+                return $(this).val();
+            }).get();
+
+            const creadorId = localStorage.getItem('userID'); // Obtén el ID del creador
+            const fotoGrupo = $('#fotoGrupo')[0].files[0]; // Obtén el archivo seleccionado
+
+            // Validación de los campos
+            if (!nombreGrupo || contactosSeleccionados.length === 0 || !creadorId) {
+                alert('Por favor, ingresa un nombre para el grupo, selecciona al menos un contacto y asegúrate de que estés logueado.');
+                return;
+            }
+
+            // Crea un objeto FormData para enviar el archivo y los datos del grupo
+            const formData = new FormData();
+            formData.append('nombre', nombreGrupo);
+            formData.append('miembros', JSON.stringify(contactosSeleccionados));
+            formData.append('creadorId', creadorId);
+            if (fotoGrupo) {
+                formData.append('foto', fotoGrupo); // Agrega la foto al FormData
+            }
+
+            // Aquí harías la llamada al backend para crear el grupo
+            $.post({
+                url: '/api/grupos',
+                data: formData,
+                processData: false, // Evita que jQuery procese los datos
+                contentType: false, // Evita que jQuery establezca el tipo de contenido
+                success: function (response) {
+                    alert('Grupo creado exitosamente');
+                    $('#crearGrupoModal').modal('hide');
+                },
+                error: function (jqXHR) {
+                    const errorMessage = jqXHR.responseJSON ? jqXHR.responseJSON.error : "Error al crear el grupo.";
+                    alert(errorMessage);
+                }
+            });
+        });
 
 
         // Selecciona el contenedor del historial de chat
@@ -477,22 +518,22 @@ function cargarConversacion(contactId, contactName, contactFoto, contactStatus, 
         }
 
         // Escuchar el evento de mensajes
-        socket.on('nuevo mensaje', function(data) {
-    const { id_Usuario_Emisor, Contenido, hora, id_Grupo, nombreEmisor, fotoEmisor } = data;
-    const id_Usuario_Sesion = localStorage.getItem('userID'); // ID del usuario en sesión
+        socket.on('nuevo mensaje', function (data) {
+            const { id_Usuario_Emisor, Contenido, hora, id_Grupo, nombreEmisor, fotoEmisor } = data;
+            const id_Usuario_Sesion = localStorage.getItem('userID'); // ID del usuario en sesión
 
-    console.log("Mensaje recibido: ", data);
-    console.log("currentContactId: ", currentContactId);
+            console.log("Mensaje recibido: ", data);
+            console.log("currentContactId: ", currentContactId);
 
-    // Para mensajes de grupo
-    if (id_Grupo && id_Grupo === currentContactId) {
-        console.log("Entrando en mensaje grupal");
-        const chatHistory = document.querySelector('.chat-history ul');
+            // Para mensajes de grupo
+            if (id_Grupo && id_Grupo === currentContactId) {
+                console.log("Entrando en mensaje grupal");
+                const chatHistory = document.querySelector('.chat-history ul');
 
-        // Verificar si el mensaje es del usuario en sesión o de otro
-        if (id_Usuario_Emisor != id_Usuario_Sesion) {
-            // Mensaje de otro usuario
-            chatHistory.innerHTML += `
+                // Verificar si el mensaje es del usuario en sesión o de otro
+                if (id_Usuario_Emisor != id_Usuario_Sesion) {
+                    // Mensaje de otro usuario
+                    chatHistory.innerHTML += `
                 <li class="clearfix">
                     <div class="message-data">
                         <span class="message-data-time">${hora}</span>
@@ -502,39 +543,39 @@ function cargarConversacion(contactId, contactName, contactFoto, contactStatus, 
                         <strong>${nombreEmisor}</strong>: ${Contenido}
                     </div>
                 </li>`;
-        } else {
-            // Mensaje del usuario en sesión
-            chatHistory.innerHTML += `
+                } else {
+                    // Mensaje del usuario en sesión
+                    chatHistory.innerHTML += `
                 <li class="clearfix">
                     <div class="message-data-my text-right">
                         <span class="message-data-time">${hora}</span>
                     </div>
                     <div class="message other-message float-right">${Contenido}</div>
                 </li>`;
-        }
-        scrollToBottom();
-    } 
-    // Para mensajes individuales
-    else if (!id_Grupo && (data.id_Usuario_Receptor === currentContactId || id_Usuario_Emisor === currentContactId)) {
-        console.log("Entrando en mensaje individual");
-        const chatHistory = document.querySelector('.chat-history ul');
-        chatHistory.innerHTML += `
+                }
+                scrollToBottom();
+            }
+            // Para mensajes individuales
+            else if (!id_Grupo && (data.id_Usuario_Receptor === currentContactId || id_Usuario_Emisor === currentContactId)) {
+                console.log("Entrando en mensaje individual");
+                const chatHistory = document.querySelector('.chat-history ul');
+                chatHistory.innerHTML += `
             <li class="clearfix">
                 <div class="message-data-my text-right">
                     <span class="message-data-time">${hora}</span>
                 </div>
                 <div class="message other-message float-right">${Contenido}</div>
             </li>`;
-        scrollToBottom();
-    } 
-    // Si el mensaje es para otro contacto o grupo
-    else if (id_Grupo && id_Grupo !== currentContactId) {
-        console.log("Mensaje recibido para otro grupo. No se recarga la conversación.");
-    } else {
-        console.log("Mensaje recibido para otro contacto. Recargando conversación.");
-        cargarConversacion(currentContactId, $('#contact-name').text(), $('#contact-avatar').attr('src'), $('#contact-status').text(), localStorage.getItem('userID'));
-    }
-});
+                scrollToBottom();
+            }
+            // Si el mensaje es para otro contacto o grupo
+            else if (id_Grupo && id_Grupo !== currentContactId) {
+                console.log("Mensaje recibido para otro grupo. No se recarga la conversación.");
+            } else {
+                console.log("Mensaje recibido para otro contacto. Recargando conversación.");
+                cargarConversacion(currentContactId, $('#contact-name').text(), $('#contact-avatar').attr('src'), $('#contact-status').text(), localStorage.getItem('userID'));
+            }
+        });
 
 
         // Escuchar el evento 'estado usuario' en el cliente
@@ -552,10 +593,10 @@ function cargarConversacion(contactId, contactName, contactFoto, contactStatus, 
         });
 
         // Escuchar el evento de nuevo grupo
-socket.on('nuevoGrupo', function(grupo) {
-    const listaContactos = $('.chat-list');
-    
-    const groupElement = $(`
+        socket.on('nuevoGrupo', function (grupo) {
+            const listaContactos = $('.chat-list');
+
+            const groupElement = $(`
         <li class="clearfix" data-id="${grupo.id_Grupo}" data-nombre="${grupo.nombre}" data-descripcion="${grupo.Descripcion}" data-foto="${grupo.foto}" data-esgrupo="true">
             <img src="/fotosGrupos/${grupo.foto}" alt="grupo" class="avatar">
             <div class="about">
@@ -564,21 +605,21 @@ socket.on('nuevoGrupo', function(grupo) {
             </div>
         </li>
     `);
-    
 
-    groupElement.on('click', function() {
-        const groupId = $(this).data('id');
-        const groupName = $(this).data('nombre');
-        const groupFoto = $(this).data('foto') ? `/fotosGrupos/${$(this).data('foto')}` : null;
-        const groupDescription = $(this).data("Grupo") || "Grupo";
-        const esGrupo = $(this).data('esgrupo');
 
-        cargarConversacionGrupo(groupId, groupName, groupFoto, groupDescription, id_Usuario_Sesion, esGrupo);
-    });
-    
+            groupElement.on('click', function () {
+                const groupId = $(this).data('id');
+                const groupName = $(this).data('nombre');
+                const groupFoto = $(this).data('foto') ? `/fotosGrupos/${$(this).data('foto')}` : null;
+                const groupDescription = $(this).data("Grupo") || "Grupo";
+                const esGrupo = $(this).data('esgrupo');
 
-    listaContactos.append(groupElement);
-});
+                cargarConversacionGrupo(groupId, groupName, groupFoto, groupDescription, id_Usuario_Sesion, esGrupo);
+            });
+
+
+            listaContactos.append(groupElement);
+        });
 
 
 
@@ -586,7 +627,7 @@ socket.on('nuevoGrupo', function(grupo) {
         document.querySelector('.send-button').addEventListener('click', sendMessage);
 
         // Manejar el evento de presionar Enter en el campo de entrada
-        document.querySelector('.message-input').addEventListener('keypress', function(event) {
+        document.querySelector('.message-input').addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
@@ -601,7 +642,7 @@ socket.on('nuevoGrupo', function(grupo) {
 
 
         // Evento para iniciar una videollamada con el contacto actual
-        document.getElementById("videollamada").addEventListener("click", function(event) {
+        document.getElementById("videollamada").addEventListener("click", function (event) {
             event.preventDefault();
             if (currentContactId) {
                 socket.emit("iniciar llamada", {
@@ -611,12 +652,12 @@ socket.on('nuevoGrupo', function(grupo) {
                 });
                 alert("Videollamada iniciada, esperando respuesta...");
                 console.log("Videollamada iniciada con:", currentContactId);
-            
+
             } else {
                 alert("Por favor, selecciona un contacto para iniciar una videollamada.");
             }
         });
-        
+
         // Escuchar eventos de videollamada
         socket.on("solicitud llamada", (data) => {
             const aceptar = confirm(`Videollamada entrante de ${data.nombreEmisor}. ¿Aceptar?`);
@@ -628,31 +669,31 @@ socket.on('nuevoGrupo', function(grupo) {
                 socket.emit("respuesta llamada", { aceptada: false, emisor: data.emisor });
             }
         });
-        
+
         socket.on("llamada aceptada", (data) => {
             alert("La videollamada ha sido aceptada. Conectando...");
             window.location.href = "/videollamada.html";
         });
-        
+
         socket.on("llamada rechazada", () => {
             alert("La videollamada fue rechazada.");
         });
 
 
 
-        document.getElementById("rewards-button").addEventListener("click", function(event) {
+        document.getElementById("rewards-button").addEventListener("click", function (event) {
             event.preventDefault();
             window.location.href = "logros.html";
         });
 
-        document.getElementById("logout-button").addEventListener("click", function(event) {
+        document.getElementById("logout-button").addEventListener("click", function (event) {
             event.preventDefault();
             window.location.href = "inicioyregistro.html";
         });
 
         // Función para mostrar/ocultar el menú
         function toggleMenu(buttonId, menuId) {
-            document.getElementById(buttonId).addEventListener('click', function() {
+            document.getElementById(buttonId).addEventListener('click', function () {
                 const menu = document.getElementById(menuId);
                 menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
             });
@@ -663,11 +704,11 @@ socket.on('nuevoGrupo', function(grupo) {
         toggleMenu('options-button', 'options-menu');
 
         // Cerrar los menús si se hace clic fuera de ellos
-        document.addEventListener('click', function(event) {
-            const isClickInsidePlus = document.getElementById('plus-button').contains(event.target) || 
-                                      document.getElementById('plus-menu').contains(event.target);
-            const isClickInsideOptions = document.getElementById('options-button').contains(event.target) || 
-                                         document.getElementById('options-menu').contains(event.target);
+        document.addEventListener('click', function (event) {
+            const isClickInsidePlus = document.getElementById('plus-button').contains(event.target) ||
+                document.getElementById('plus-menu').contains(event.target);
+            const isClickInsideOptions = document.getElementById('options-button').contains(event.target) ||
+                document.getElementById('options-menu').contains(event.target);
 
             if (!isClickInsidePlus) {
                 document.getElementById('plus-menu').style.display = 'none';
@@ -679,7 +720,7 @@ socket.on('nuevoGrupo', function(grupo) {
         });
 
         //Manejador para el botón de adjuntar
-        document.getElementById("attach-button").addEventListener("click", function(event) {
+        document.getElementById("attach-button").addEventListener("click", function (event) {
             event.preventDefault();
             const attachMenu = document.getElementById('attach-menu');
             attachMenu.style.display = attachMenu.style.display === 'block' ? 'none' : 'block';
@@ -694,18 +735,18 @@ socket.on('nuevoGrupo', function(grupo) {
                 alert("La geolocalización no es compatible con este navegador.");
             }
         });
-        
+
         //Función para enviar la ubicación como mensaje
         function sendLocationMessage(position) {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
-        
+
             const id_Usuario_Emisor = localStorage.getItem('userID');
             const id_Grupo = esGrupo ? currentContactId : null;
             const id_Usuario_Receptor = !esGrupo ? currentContactId : null;
-        
+
             const locationMessage = `Ubicación: https://www.google.com/maps?q=${latitude},${longitude}`;
-        
+
             const dataToSend = {
                 id_Usuario_Emisor,
                 Contenido: locationMessage,
@@ -714,16 +755,16 @@ socket.on('nuevoGrupo', function(grupo) {
                 nombreEmisor: localStorage.getItem('nombreUsuario'),
                 fotoEmisor: localStorage.getItem('fotoUsuario')
             };
-        
-            $.post('/api/mensajes', dataToSend, function(data) {
+
+            $.post('/api/mensajes', dataToSend, function (data) {
                 scrollToBottom();
                 const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
                 socket.emit('nuevo mensaje', { ...dataToSend, hora });
-            }).fail(function() {
+            }).fail(function () {
                 alert("Error al enviar la ubicación.");
             });
         }
-        
+
         //Manejar errores de geolocalización
         function handleLocationError(error) {
             alert("Error al obtener la ubicación: " + error.message);
@@ -734,4 +775,5 @@ socket.on('nuevoGrupo', function(grupo) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
