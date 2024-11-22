@@ -93,6 +93,10 @@ SELECT * FROM Mensaje;
 SELECT * FROM Usuario_Grupo;
 SELECT * FROM Grupo;
 
+ALTER DATABASE pia_poi CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+ALTER TABLE Mensaje CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
 DROP TABLE Usuario_Grupo;
 DROP table Grupo;
 
@@ -106,7 +110,9 @@ VALUES (6, 1, 'Hola, ¿cómo estás?', '2024-10-07 10:10:00'),
        (6, 4, '¡Hola! Estoy bien, gracias.', '2024-10-07 11:12:00'),
        (4, 6, 'Me alegro, deberíamos vernos algún día', '2024-10-07 11:24:00');
        
-       
+  insert into grupo (nombre, foto) 
+  values('grupo1','asdf');
+  
 UPDATE Mensaje SET Fecha_Hora = '2024-10-07 10:13:00'
 WHERE id_Mensaje = 4;
 
@@ -135,4 +141,88 @@ VALUES (3, NULL, 'Otro mensaje de prueba', NOW(), 1);
 ALTER TABLE Mensaje MODIFY COLUMN id_Usuario_Receptor INT NULL;
 
 UPDATE Usuario SET Estado = 'Desconectado' WHERE id_Usuario =  1;
+
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '1234';
+FLUSH PRIVILEGES;
+
+alter table mensaje add column encriptacion bit default 1;
+
+ación que Respeta los Espacios
+sql
+
+DELIMITER //
+
+CREATE PROCEDURE sp_encriptarmensaje(
+    IN texto VARCHAR(255), 
+    OUT mensaje_encriptado BLOB
+)
+BEGIN
+    -- Encripta el mensaje usando una clave secreta (puedes cambiarla)
+    SET mensaje_encriptado = AES_ENCRYPT(texto, 'mi_clave_secreta');
+END //
+
+DELIMITER ;
+
+
+drop procedure sp_encriptarmensaje;
+
+
+
+
+DELIMITER //
+
+CREATE TRIGGER before_insert_mensaje
+BEFORE INSERT ON Mensaje
+FOR EACH ROW
+BEGIN
+    -- Verifica si el valor de 'encriptacion' es 1
+    IF NEW.encriptacion = 1 THEN
+        -- Llama al procedimiento almacenado para encriptar el mensaje
+        CALL sp_encriptarmensaje(NEW.Contenido, @mensajeEncriptado);
+        
+        -- Asigna el mensaje encriptado al campo 'Contenido'
+        SET NEW.Contenido = @mensajeEncriptado;
+    END IF;
+END //
+
+DELIMITER ;
+
+
+
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE sp_desencriptarmensaje(
+    IN mensaje_encriptado BLOB, 
+    OUT mensaje_desencriptado VARCHAR(255)
+)
+BEGIN
+    -- Desencripta el mensaje usando la misma clave secreta
+    SET mensaje_desencriptado = AES_DECRYPT(mensaje_encriptado, 'mi_clave_secreta');
+    
+END //
+
+DELIMITER ;
+
+
+
+alter table mensaje add column encriptacion int default 1;
+call sp_desencriptarmensaje('ipmb');
+drop procedure sp_encriptarmensaje;
+SET @mensajeDesencriptado = '';
+
+-- Llamar al procedimiento almacenado con el mensaje de entrada y la variable de salida
+CALL sp_desencriptarmensaje('ipmb', @mensajeDesencriptado);
+
+-- Mostrar el valor desencriptado
+SELECT @mensajeDesencriptado AS mensajeDesencriptado;
+
+SET @mensaje_desencriptado = '';
+CALL sp_desencriptarmensaje(
+    (SELECT Contenido FROM Mensaje WHERE id_Mensaje = 22), -- ID del mensaje específico, 
+    @mensaje_desencriptado
+);
+SELECT @mensaje_desencriptado AS mensaje_desencriptado;
  

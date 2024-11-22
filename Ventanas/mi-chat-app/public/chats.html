@@ -342,46 +342,17 @@
                     const messageClass = mensaje.id_Usuario_Emisor === contactId ? 'my-message' : 'other-message float-right';
                     const alignmentClass = mensaje.id_Usuario_Emisor === contactId ? 'message-data' : 'message-data-my text-right';
 
-                    // Verificar si el mensaje está encriptado
-                    if (mensaje.encriptacion === 1) {
-                        // Aquí se hace la llamada para desencriptar el mensaje. 
-                        // Esto puede implicar una llamada a una API de backend que llame el procedimiento almacenado 'sp_desencriptarmensaje'.
-                        // Ejemplo usando fetch (suponiendo que tienes un endpoint en tu servidor que te devuelva el mensaje desencriptado):
-                        fetch('/desencriptar-mensaje', {
-                            method: 'POST',
-                            body: JSON.stringify({ idMensaje: mensaje.idMensaje }),
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                // Una vez que se obtenga el mensaje desencriptado, se inserta en el chat
-                                const mensajeDesencriptado = data.textoDesencriptado;
-                                chatHistory.append(`
-                        <li class="clearfix">
-                            <div class="${alignmentClass}">
-                                <span class="message-data-time">${mensaje.hora}</span>
-                            </div>
-                            <div class="message ${messageClass}">${mensajeDesencriptado}</div>
-                        </li>
-                    `);
-                            })
-                            .catch(error => {
-                                console.error('Error al desencriptar el mensaje:', error);
-                            });
-                    } else {
-                        // Si el mensaje no está encriptado, lo mostramos tal cual
-                        chatHistory.append(`
-                    <li class="clearfix">
+                    // Si el mensaje no está encriptado, lo mostramos tal cual
+                    chatHistory.append(
+                        `<li class="clearfix">
                         <div class="${alignmentClass}">
                             <span class="message-data-time">${mensaje.hora}</span>
-                        </div>
-                        <div class="message ${messageClass}">${mensaje.texto}</div>
-                    </li>
-                `);
-                    }
-                });
+                        </div>    
+                    <div class="message ${messageClass}">${mensaje.texto}</div>
+                    </li>`);
+                }
+
+                );
 
 
                 scrollToBottom();

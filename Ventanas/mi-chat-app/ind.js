@@ -143,26 +143,25 @@ app.get('/api/contactos-y-grupos/:userID', (req, res) => {
 });
 
 
+
 // Ruta para obtener la conversación con un contacto específico o un grupo
-app.get('/api/conversacion/:contactId', (req, res) => {
+app.get('/api/conversacion/:contactId', async (req, res) => {
     const contactId = req.params.contactId;
     const userId = req.query.userID;
-    const isGroup = req.query.esGrupo === 'true'; // Detectar si es una conversación de grupo
+    const isGroup = req.query.esGrupo === 'true';
 
     if (!userId || isNaN(contactId) || isNaN(userId)) {
         return res.status(400).send('ID de usuario o contacto inválido');
     }
 
-    let query;
-    let queryParams;
+    let query, queryParams;
 
     if (isGroup) {
-        // Consulta para obtener mensajes del grupo específico
         query = `
             SELECT m.id_Usuario_Emisor, m.Contenido AS texto,
                    DATE_FORMAT(m.Fecha_Hora, '%d-%m-%Y') AS fecha,
                    DATE_FORMAT(m.Fecha_Hora, '%h:%i %p') AS hora,
-                   u.Nombre AS nombreEmisor, u.Foto AS fotoEmisor
+                   u.Nombre AS nombreEmisor, u.Foto AS fotoEmisor, m.encriptacion
             FROM Mensaje m
             JOIN Usuario u ON m.id_Usuario_Emisor = u.id_Usuario
             WHERE m.id_Grupo = ?
@@ -170,11 +169,10 @@ app.get('/api/conversacion/:contactId', (req, res) => {
         `;
         queryParams = [contactId];
     } else {
-        // Consulta para obtener mensajes individuales entre dos usuarios
         query = `
             SELECT m.id_Usuario_Emisor, m.Contenido AS texto,
                    DATE_FORMAT(m.Fecha_Hora, '%d-%m-%Y') AS fecha,
-                   DATE_FORMAT(m.Fecha_Hora, '%h:%i %p') AS hora
+                   DATE_FORMAT(m.Fecha_Hora, '%h:%i %p') AS hora, m.encriptacion
             FROM Mensaje m
             WHERE (m.id_Usuario_Emisor = ? AND m.id_Usuario_Receptor = ?)
                OR (m.id_Usuario_Emisor = ? AND m.id_Usuario_Receptor = ?)
@@ -183,20 +181,48 @@ app.get('/api/conversacion/:contactId', (req, res) => {
         queryParams = [userId, contactId, contactId, userId];
     }
 
-    connection.query(query, queryParams, (err, results) => {
+    connection.query(query, queryParams, async (err, results) => {
         if (err) {
             console.error('Error en la consulta a la base de datos:', err);
             return res.status(500).send('Error en la consulta a la base de datos');
         }
 
-        results = results.map(msg => {
-            msg.hora = msg.hora.toLowerCase().replace('am', 'a.m.').replace('pm', 'p.m.');
-            return msg;
-        });
+        // Procesar cada mensaje de forma asíncrona
+        for (let i = 0; i < results.length; i++) {
+            const mensaje = results[i];
+            if (mensaje.encriptacion === 1) {
+                // Desencriptar mensaje si encriptacion es 1
+                await new Promise((resolve, reject) => {
+                    connection.query('CALL sp_desencriptarmensaje(?,@mensaje_desencriptado)', [mensaje.texto,null], (err) => {
+                        if (err) {
+                            console.error('Error al desencriptar mensaje:', err);
+                            return reject(err);
+                        }
+                    
+                        // Luego de que el procedimiento se haya ejecutado, ejecutamos el SELECT para obtener el valor de @mensaje_desencriptado
+                        connection.query('SELECT @mensaje_desencriptado AS mensaje_desencriptado', (err, desencriptadoResults) => {
+                            if (err) {
+                                console.error('Error al obtener el mensaje desencriptado:', err);
+                                return reject(err);
+                            }
+                    
+                            // Asigna el mensaje desencriptado al objeto mensaje
+                            mensaje.texto = desencriptadoResults[0].mensaje_desencriptado;
+                            resolve();
+                        });
+                    });
 
-        res.json(results);
+
+
+                });
+            }
+        }
+
+        res.json(results);  // Devolver los resultados con los mensajes ya desencriptados si es necesario
     });
 });
+
+
 
 
 
@@ -243,22 +269,7 @@ app.post('/api/mensajes', (req, res) => {
 });
 
 
-app.get('/desencriptar-mensaje/:idMensaje', (req, res) => {
-    const idMensaje = req.params.id_Mensaje;
 
-    // Llamada al procedimiento almacenado sp_desencriptarmensaje
-    db.query('CALL sp_desencriptarmensaje(?)', [id_Mensaje], (error, results) => {
-        if (error) {
-            return res.status(500).json({ error: 'Error al desencriptar el mensaje' });
-        }
-        
-        // El resultado contiene el mensaje desencriptado
-        const mensajeDesencriptado = results[0][0].contenido_desencriptado;
-        
-        // Devolver el mensaje desencriptado al cliente
-        res.json({ textoDesencriptado: mensajeDesencriptado });
-    });
-});
 
 app.post('/api/grupos', upload.single('foto'), (req, res) => {
     const { nombre, miembros, creadorId } = req.body; // Obtener los datos del cuerpo de la solicitud
