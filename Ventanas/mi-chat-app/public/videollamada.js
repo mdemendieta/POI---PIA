@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Mostrar el stream local en el video principal
-            videoElement.srcObject = localStream;
+            smallVideoElement.srcObject = localStream;
 
             // Iniciar la llamada (envío de stream al otro usuario)
             startCall();
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Manejar los tracks remotos
         peerConnection.ontrack = (event) => {
             console.log("Stream recibido desde la otra parte:", event.streams[0]);
-            smallVideoElement.srcObject = event.streams[0];
+            videoElement.srcObject = event.streams[0];
         };
 
         // Manejar ICE candidates
@@ -123,5 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelector('.hangup-btn').addEventListener('click', function() {
         alert('Colgando la llamada...');
+    });
+
+
+    // Control de micrófono
+    let isMuted = false;
+    document.querySelector('.control-btn.mic').addEventListener('click', () => {
+        isMuted = !isMuted;
+        localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
     });
 });
