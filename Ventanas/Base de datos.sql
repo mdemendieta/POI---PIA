@@ -225,4 +225,8 @@ CALL sp_desencriptarmensaje(
     @mensaje_desencriptado
 );
 SELECT @mensaje_desencriptado AS mensaje_desencriptado;
+
+
+
+ALTER TABLE Mensaje MODIFY COLUMN Contenido BLOB NULL;
  
