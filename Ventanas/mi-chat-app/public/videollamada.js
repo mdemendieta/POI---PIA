@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             smallVideoElement.srcObject = localStream;
+            smallVideoElement.muted = true; // Mute local video element to avoid echo
 
             socket.emit('iniciar llamada', {
                 emisor: currentUserId,
@@ -54,15 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Configurar recepción de pistas remotas
-        // peerConnection.ontrack = (event) => {
-        //     console.log('Remote track received:', event.streams[0]);
-        //     event.streams[0].getTracks().forEach(track => {
-        //         console.log('Adding remote track:', track);
-        //         remoteStream.addTrack(track);
-        //     });
-        //     videoElement.srcObject = remoteStream;
-        // };
-
         peerConnection.ontrack = (event) => {
             console.log('Remote track received:', event.streams[0]);
             event.streams[0].getTracks().forEach(track => {
@@ -73,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 remoteStream.addTrack(track);
             });
             videoElement.srcObject = remoteStream;
-        
+
             // Asignar la pista de audio al elemento de vídeo
             const audioTracks = remoteStream.getAudioTracks();
             if (audioTracks.length > 0) {
@@ -82,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 audioElement.play();
             }
         };
-        
 
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
