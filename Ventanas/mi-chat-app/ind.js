@@ -375,6 +375,43 @@ io.on('connection', (socket) => {
         }
     });
 
+
+    // En el servidor, cuando se recibe una oferta
+    socket.on('video-offer', (offer) => {
+        const receptorSocketId = usuariosConectados[offer.receptor]; 
+        if (receptorSocketId) {
+            io.to(receptorSocketId).emit('video-offer', offer);
+        }
+    });
+
+    // En el servidor, cuando se recibe una respuesta
+    socket.on('video-answer', (answer) => {
+        const receptorSocketId = usuariosConectados[answer.receptor];
+        if (receptorSocketId) {
+            io.to(receptorSocketId).emit('video-answer', answer);
+        }
+    });
+
+
+
+    // Evento para colgar la llamada**
+    socket.on('hangUp', (data) => {
+        const { userId } = data;
+        const otherUserId = Object.keys(usuariosConectados).find(id => id !== userId);
+    
+        if (otherUserId) {
+            const otherUserSocketId = usuariosConectados[otherUserId];
+    
+            // Emitir evento 'hangUp' al otro usuario
+            io.to(otherUserSocketId).emit('hangUp', { userId });
+            console.log(`El usuario ${userId} ha colgado la llamada, se notificó al usuario ${otherUserId}`);
+        } else {
+            console.log(`No hay otro usuario en la llamada para ${userId}`);
+        }
+    });
+
+
+
     // Eliminar al usuario de usuariosConectados al desconectarse
     socket.on('disconnect', () => {
         const userId = Object.keys(usuariosConectados).find(id => usuariosConectados[id] === socket.id);

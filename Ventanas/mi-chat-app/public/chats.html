@@ -365,8 +365,8 @@
         // Emitir el evento para indicar que el usuario está conectado
         socket.emit("user connected", localStorage.getItem("userID"));
 
-        // Almacena el nombre de usuario
-        const username = 'Juan Pérez'; // Cambia 'Juan Pérez' por un nombre de usuario real si es necesario
+        // Almacena el nombre de usuario 
+        const username = localStorage.getItem("nombreUsuario"); 
 
         // Llamar a la función para cargar contactos al cargar la página
         $(document).ready(function () {

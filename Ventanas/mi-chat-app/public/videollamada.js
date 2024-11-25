@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let localStream;
     const videoElement = document.querySelector('.main-video video');
     const smallVideoElement = document.querySelector('.small-video video');
+    const currentUserId = localStorage.getItem("userID"); 
 
     document.getElementById("boton-colgar").addEventListener("click", function(event) {
         if (localStream) {
@@ -12,9 +13,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (peerConnection) {
             peerConnection.close();
         }
+
+        // Enviar un mensaje al servidor para notificar que el usuario ha colgado
+        socket.emit('hangUp', { userId: currentUserId });
+
+
         setTimeout(() => {
             window.location.href = "chats.html";
         }, 100); // Añade un pequeño retardo
+    });
+
+    // En el cliente, cuando el servidor emite 'hangUp', el usuario debe colgar la llamada.
+    socket.on('hangUp', (data) => {
+        console.log("El otro usuario ha colgado la llamada.");
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        if (peerConnection) {
+            peerConnection.close();
+        }
+        // Redirigir o actualizar la interfaz según sea necesario
+        window.location.href = "chats.html";
     });
     
 
@@ -56,7 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Manejar los tracks remotos
         peerConnection.ontrack = (event) => {
             console.log("Stream recibido desde la otra parte:", event.streams[0]);
-            videoElement.srcObject = event.streams[0];
+            if (videoElement.srcObject !== event.streams[0]) {
+                videoElement.srcObject = event.streams[0]; // Mostrar video remoto
+            }
         };
 
         // Manejar ICE candidates
@@ -132,4 +153,5 @@ document.addEventListener('DOMContentLoaded', () => {
         isMuted = !isMuted;
         localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
     });
+
 });
