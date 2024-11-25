@@ -7,9 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = localStorage.getItem("nombreUsuario");
     let receptorId = localStorage.getItem("userIDReceptor");
 
-    console.log("ID actual antes de emitir:", currentUserId);
-    console.log("El receptor es:", receptorId);
-
     if (!currentUserId || !receptorId) {
         console.error("Falta el ID de usuario o el receptor. Verifica el localStorage.");
         return;
@@ -32,8 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     async function startVideoCall() {
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            console.log("Local stream obtained");
-            console.log("Local stream tracks:", localStream.getTracks());
             smallVideoElement.srcObject = localStream;
 
             socket.emit('iniciar llamada', {
@@ -54,65 +49,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Agregar todas las pistas locales (video y audio)
         localStream.getTracks().forEach(track => {
+            console.log('Adding local track:', track);
             peerConnection.addTrack(track, localStream);
-            console.log("Added local track:", track);
         });
 
+        // Configurar recepción de pistas remotas
         // peerConnection.ontrack = (event) => {
-        //     console.log("Received remote track:", event.track);
+        //     console.log('Remote track received:', event.streams[0]);
         //     event.streams[0].getTracks().forEach(track => {
+        //         console.log('Adding remote track:', track);
         //         remoteStream.addTrack(track);
-        //         console.log("Added track to remoteStream:", track);
-
-        //         // Detectar si es una pista de audio
-        //         if (track.kind === "audio") {
-        //             console.log("Hola"); // Aquí imprimimos "hola" cuando se recibe audio
-        //         }
         //     });
         //     videoElement.srcObject = remoteStream;
         // };
 
         peerConnection.ontrack = (event) => {
-            console.log("Received remote track:", event.track);
+            console.log('Remote track received:', event.streams[0]);
             event.streams[0].getTracks().forEach(track => {
-                remoteStream.addTrack(track);
-                console.log("Added track to remoteStream:", track);
-        
-                // Detectar si es una pista de audio
-                if (track.kind === "audio") {
-                    console.log("Pista de audio detectada");
-                    
-                    // Escuchar cambios en el nivel de volumen para confirmar recepción de audio
-                    const audioContext = new AudioContext();
-                    const audioSource = audioContext.createMediaStreamSource(remoteStream);
-                    const analyser = audioContext.createAnalyser();
-        
-                    audioSource.connect(analyser);
-        
-                    // Monitor de audio (verifica si hay actividad en la pista de audio)
-                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-                    const checkAudio = () => {
-                        analyser.getByteFrequencyData(dataArray);
-                        const sum = dataArray.reduce((a, b) => a + b, 0);
-                        if (sum > 0) {
-                            console.log("Recibiendo audio del otro usuario: Hola");
-                        } else {
-                            console.log("Sin actividad de audio por ahora");
-                        }
-                        // Continuar verificando periódicamente
-                        setTimeout(checkAudio, 1000);
-                    };
-        
-                    checkAudio();
+                console.log('Adding remote track:', track);
+                if (track.kind === 'audio') {
+                    console.log('Audio track info:', track.getSettings());
                 }
+                remoteStream.addTrack(track);
             });
             videoElement.srcObject = remoteStream;
+        
+            // Asignar la pista de audio al elemento de vídeo
+            const audioTracks = remoteStream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                const audioElement = new Audio();
+                audioElement.srcObject = new MediaStream(audioTracks);
+                audioElement.play();
+            }
         };
         
 
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log("Sending ICE candidate:", event.candidate);
                 socket.emit('ice-candidate', { candidate: event.candidate, receptor: receptorId });
             }
         };
@@ -121,14 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function startCall() {
         createPeerConnection();
         peerConnection.createOffer()
-            .then(offer => {
-                console.log("Created offer:", offer);
-                return peerConnection.setLocalDescription(offer);
-            })
+            .then(offer => peerConnection.setLocalDescription(offer))
             .then(() => {
-                console.log("Local description set:", peerConnection.localDescription);
-                socket.emit('video-offer', { offer: peerConnection.localDescription, receptor: receptorId, emisor: currentUserId });
-                console.log("Sent video offer");
+                socket.emit('video-offer', {
+                    offer: peerConnection.localDescription,
+                    receptor: receptorId,
+                    emisor: currentUserId
+                });
             })
             .catch(error => console.error("Error creando la oferta:", error));
     }
@@ -138,33 +110,24 @@ document.addEventListener('DOMContentLoaded', () => {
         createPeerConnection();
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
             .then(() => peerConnection.createAnswer())
-            .then(answer => {
-                return peerConnection.setLocalDescription(answer);
-            })
+            .then(answer => peerConnection.setLocalDescription(answer))
             .then(() => {
-                console.log("Sending video answer:", peerConnection.localDescription);
                 socket.emit('video-answer', { answer: peerConnection.localDescription, receptor: data.emisor });
             })
             .catch(error => console.error("Error al procesar video-offer:", error));
     });
 
     socket.on('video-answer', (data) => {
-        console.log("Received video answer:", data);
-        if (data.answer && data.answer.type && data.answer.sdp) {
+        if (data.answer) {
             peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer))
                 .catch(error => console.error("Error al establecer RemoteDescription:", error));
-        } else {
-            console.error("Invalid answer data received:", data);
         }
     });
 
     socket.on('ice-candidate', (data) => {
         if (data.candidate) {
-            console.log("Received ICE candidate:", data.candidate);
             peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
                 .catch(error => console.error("Error agregando ICE candidate:", error));
-        } else {
-            console.warn("ICE candidate nulo o inválido recibido:", data);
         }
     });
 
@@ -183,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('hangUp', () => {
         if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
+            localStream.getTracks().forEach(track => stop());
         }
         if (peerConnection) {
             peerConnection.close();
