@@ -327,6 +327,7 @@ io.on('connection', (socket) => {
         usuariosConectados[userId] = socket.id;
         console.log(`Usuario ${userId} conectado con socket ID: ${socket.id}`);
         io.emit('actualizarEstadoContacto', { userId, estado: 'En línea' });
+        console.log(usuariosConectados);
 
         // Actualizar el estado del usuario en la base de datos a "En línea"
         const query = 'UPDATE Usuario SET Estado = "En línea" WHERE id_Usuario = ?';
@@ -353,6 +354,7 @@ io.on('connection', (socket) => {
     socket.on('iniciar llamada', (data) => {
         const { emisor, receptor, nombreEmisor } = data;
         const receptorSocketId = usuariosConectados[receptor]; // Obtener el socket del receptor
+        console.log(receptorSocketId);
         
         if (receptorSocketId) {
             // Enviar la solicitud de llamada al receptor
@@ -378,39 +380,44 @@ io.on('connection', (socket) => {
 
     // En el servidor, cuando se recibe una oferta
     socket.on('video-offer', (data) => { 
+        console.log('Video offer received:', data);
         const receptorSocketId = usuariosConectados[data.receptor]; 
         if (receptorSocketId) { 
             io.to(receptorSocketId).emit('video-offer', data); 
             console.log(`Video offer enviada a ${receptorSocketId}`); 
-        } 
+        } else {
+            console.log(`El usuario con ID ${data.receptor} no está conectado`);
+        }
     }); 
     
     socket.on('video-answer', (data) => { 
+        console.log('Video answer received:', data);
         const receptorSocketId = usuariosConectados[data.receptor]; 
         if (receptorSocketId) { 
             io.to(receptorSocketId).emit('video-answer', data); 
             console.log(`Video answer enviada a ${receptorSocketId}`); 
-        } 
+        } else {
+            console.log(`El usuario con ID ${data.receptor} no está conectado`);
+        }
     }); 
     
     socket.on('ice-candidate', (data) => { 
+        console.log('ICE candidate received:', data);
         const receptorSocketId = usuariosConectados[data.receptor]; 
         if (receptorSocketId) { 
             io.to(receptorSocketId).emit('ice-candidate', data); 
             console.log(`ICE candidate enviado a ${receptorSocketId}`); 
-        } 
+        } else {
+            console.log(`El usuario con ID ${data.receptor} no está conectado`);
+        }
     });
 
-
-    // Evento para colgar la llamada**
     socket.on('hangUp', (data) => {
         const { userId } = data;
         const otherUserId = Object.keys(usuariosConectados).find(id => id !== userId);
     
         if (otherUserId) {
             const otherUserSocketId = usuariosConectados[otherUserId];
-    
-            // Emitir evento 'hangUp' al otro usuario
             io.to(otherUserSocketId).emit('hangUp', { userId });
             console.log(`El usuario ${userId} ha colgado la llamada, se notificó al usuario ${otherUserId}`);
         } else {

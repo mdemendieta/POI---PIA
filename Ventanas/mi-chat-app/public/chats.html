@@ -635,6 +635,8 @@
             if (aceptar) {
                 socket.emit("respuesta llamada", { aceptada: true, emisor: data.emisor });
                 // Aquí rediriges a la pantalla de videollamada o abres la interfaz de videollamada
+                alert(currentContactId);
+                localStorage.setItem('userIDReceptor', currentContactId);
                 window.location.href = "/videollamada.html";
             } else {
                 socket.emit("respuesta llamada", { aceptada: false, emisor: data.emisor });
@@ -643,6 +645,8 @@
 
         socket.on("llamada aceptada", (data) => {
             alert("La videollamada ha sido aceptada. Conectando...");
+            alert(currentContactId);
+            localStorage.setItem('userIDReceptor', currentContactId);
             window.location.href = "/videollamada.html";
         });
 
