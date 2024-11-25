@@ -353,7 +353,7 @@ io.on('connection', (socket) => {
     // Manejar evento de iniciar llamada
     socket.on('iniciar llamada', (data) => {
         const { emisor, receptor, nombreEmisor } = data;
-        const receptorSocketId = usuariosConectados[receptor]; // Obtener el socket del receptor
+        const receptorSocketId = usuariosConectados[data.receptor]; // Obtener el socket del receptor
         console.log(receptorSocketId);
         
         if (receptorSocketId) {

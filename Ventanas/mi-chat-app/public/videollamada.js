@@ -96,28 +96,65 @@ setTimeout(() => {
             .catch(error => console.error("Error creando la oferta: ", error));
     }
 
+    // socket.on('video-offer', (data) => {
+    //     receptorId = data.emisor;
+    //     createPeerConnection();
+    //     peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
+    //         .then(() => {
+    //             return peerConnection.createAnswer();
+    //         })
+    //         .then(answer => {
+    //             socket.emit('video-answer', { answer: peerConnection.localDescription, receptor: data.emisor });
+    //         });
+    // });
+    
     socket.on('video-offer', (data) => {
         receptorId = data.emisor;
         createPeerConnection();
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
-            .then(() => {
-                return peerConnection.createAnswer();
-            })
+            .then(() => peerConnection.createAnswer())
             .then(answer => {
+                return peerConnection.setLocalDescription(answer);
+            })
+            .then(() => {
+                console.log("Sending video answer:", peerConnection.localDescription);
                 socket.emit('video-answer', { answer: peerConnection.localDescription, receptor: data.emisor });
-            });
+            })
+            .catch(error => console.error("Error al procesar video-offer: ", error));
     });
+    
+
+    // socket.on('video-answer', (data) => {
+    //     console.log("Received video answer: ", data);
+    //     peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer))
+    //         .catch(error => console.error("Error al establecer RemoteDescription: ", error));
+    // });
 
     socket.on('video-answer', (data) => {
         console.log("Received video answer: ", data);
-        peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer))
-            .catch(error => console.error("Error al establecer RemoteDescription: ", error));
+        if (data.answer && data.answer.type && data.answer.sdp) {
+            peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer))
+                .catch(error => console.error("Error al establecer RemoteDescription: ", error));
+        } else {
+            console.error("Invalid answer data received: ", data);
+        }
     });
+    
+
+    // socket.on('ice-candidate', (data) => {
+    //     console.log("Received ICE candidate: ", data.candidate);
+    //     peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
+    //         .catch(error => console.error("Error agregando ICE candidate: ", error));
+    // });
 
     socket.on('ice-candidate', (data) => {
-        console.log("Received ICE candidate: ", data.candidate);
-        peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
-            .catch(error => console.error("Error agregando ICE candidate: ", error));
+        if (data.candidate) {
+            console.log("Received ICE candidate: ", data.candidate);
+            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
+                .catch(error => console.error("Error agregando ICE candidate: ", error));
+        } else {
+            console.warn("ICE candidate nulo o inválido recibido: ", data);
+        }
     });
 
     document.getElementById("boton-colgar").addEventListener("click", () => {
