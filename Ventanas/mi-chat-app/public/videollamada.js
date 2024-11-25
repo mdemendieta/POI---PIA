@@ -137,12 +137,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('hangUp', () => {
         if (localStream) {
-            localStream.getTracks().forEach(track => stop());
+            localStream.getTracks().forEach(track => track.stop());
         }
         if (peerConnection) {
             peerConnection.close();
         }
         window.location.href = "chats.html";
+    });
+
+    // Botón de silenciar micrófono
+    document.getElementById('mute-button').addEventListener('click', () => {
+        const audioTracks = localStream.getAudioTracks();
+        if (audioTracks.length > 0) {
+            audioTracks[0].enabled = !audioTracks[0].enabled;
+            console.log('Microphone ' + (audioTracks[0].enabled ? 'enabled' : 'disabled'));
+        }
+    });
+
+    // Botón de apagar cámara
+    document.getElementById('video-button').addEventListener('click', () => {
+        const videoTracks = localStream.getVideoTracks();
+        if (videoTracks.length > 0) {
+            videoTracks[0].enabled = !videoTracks[0].enabled;
+            console.log('Camera ' + (videoTracks[0].enabled ? 'enabled' : 'disabled'));
+        }
     });
 
     startVideoCall();
