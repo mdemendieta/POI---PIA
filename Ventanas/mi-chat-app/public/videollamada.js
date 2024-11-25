@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
     let peerConnection;
     let localStream;
+    let remoteStream;
     const videoElement = document.querySelector('.main-video video');
     const smallVideoElement = document.querySelector('.small-video video');
     const currentUserId = localStorage.getItem("userID"); 
@@ -75,8 +76,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Manejar los tracks remotos
         peerConnection.ontrack = (event) => {
             console.log("Stream recibido desde la otra parte:", event.streams[0]);
-            if (videoElement.srcObject !== event.streams[0]) {
-                videoElement.srcObject = event.streams[0]; // Mostrar video remoto
+            if (event.streams[0]) {
+                // Mostrar video remoto en el contenedor grande
+                videoElement.srcObject = event.streams[0];
+                
+                // Asegúrate de reproducir el audio
+                const remoteStream = event.streams[0];
+                const audioTracks = remoteStream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    console.log('Audio track disponible');
+                    // El audio debe reproducirse automáticamente cuando se agrega al video
+                } else {
+                    console.error("No hay audio en el stream remoto");
+                }
             }
         };
 
@@ -120,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(() => {
                 // Enviar respuesta al otro usuario
-                socket.emit('video-answer', peerConnection.localDescription);
+                socket.emit('video-answer', { answer, receptor: offer.emisor });
             })
             .catch(error => {
                 console.error("Error manejando la oferta: ", error);
@@ -134,7 +146,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Lógica para manejar ICE candidates recibidos
     socket.on('ice-candidate', (candidate) => {
-        peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        if (peerConnection) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        }
     });
 
     // Manejadores para botones de respuesta y colgar
@@ -148,10 +162,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Control de micrófono
-    let isMuted = false;
-    document.querySelector('.control-btn.mic').addEventListener('click', () => {
-        isMuted = !isMuted;
-        localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
-    });
+let isMuted = false;
+document.querySelector('.control-btn.mic').addEventListener('click', () => {
+    isMuted = !isMuted;
+    localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
+});
 
 });

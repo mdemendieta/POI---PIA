@@ -377,21 +377,29 @@ io.on('connection', (socket) => {
 
 
     // En el servidor, cuando se recibe una oferta
-    socket.on('video-offer', (offer) => {
-        const receptorSocketId = usuariosConectados[offer.receptor]; 
-        if (receptorSocketId) {
-            io.to(receptorSocketId).emit('video-offer', offer);
-        }
+    socket.on('video-offer', (data) => { 
+        const receptorSocketId = usuariosConectados[data.receptor]; 
+        if (receptorSocketId) { 
+            io.to(receptorSocketId).emit('video-offer', data); 
+            console.log(`Video offer enviada a ${receptorSocketId}`); 
+        } 
+    }); 
+    
+    socket.on('video-answer', (data) => { 
+        const receptorSocketId = usuariosConectados[data.receptor]; 
+        if (receptorSocketId) { 
+            io.to(receptorSocketId).emit('video-answer', data); 
+            console.log(`Video answer enviada a ${receptorSocketId}`); 
+        } 
+    }); 
+    
+    socket.on('ice-candidate', (data) => { 
+        const receptorSocketId = usuariosConectados[data.receptor]; 
+        if (receptorSocketId) { 
+            io.to(receptorSocketId).emit('ice-candidate', data); 
+            console.log(`ICE candidate enviado a ${receptorSocketId}`); 
+        } 
     });
-
-    // En el servidor, cuando se recibe una respuesta
-    socket.on('video-answer', (answer) => {
-        const receptorSocketId = usuariosConectados[answer.receptor];
-        if (receptorSocketId) {
-            io.to(receptorSocketId).emit('video-answer', answer);
-        }
-    });
-
 
 
     // Evento para colgar la llamada**
