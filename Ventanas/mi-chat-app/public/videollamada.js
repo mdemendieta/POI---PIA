@@ -2,79 +2,81 @@ document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
     console.log("Socket connected:", socket);
     console.log("ID de usuario almacenado:", localStorage.getItem("userID"));
+
     const currentUserId = localStorage.getItem("userID");
-    const username = localStorage.getItem("nombreUsuario"); 
-    console.log("ID actual antes de emitir:", currentUserId);
-if (!currentUserId) {
-    console.error("El ID de usuario no está definido. Verifica su asignación en el localStorage.");
-    return;
-}
-setTimeout(() => {
-    socket.emit("user connected", localStorage.getItem("userID"));
-}, 100);
+    const username = localStorage.getItem("nombreUsuario");
+    let receptorId = localStorage.getItem("userIDReceptor");
+
+    if (!currentUserId || !receptorId) {
+        console.error("Falta el ID de usuario o el receptor. Verifica el localStorage.");
+        return;
+    }
+
+    setTimeout(() => {
+        socket.emit("user connected", localStorage.getItem("userID"));
+    }, 100);
 
     let peerConnection;
     let localStream;
     let remoteStream = new MediaStream();
-    let receptorId;
     const videoElement = document.querySelector('.main-video video');
     const smallVideoElement = document.querySelector('.small-video video');
-
-    receptorId = localStorage.getItem("userIDReceptor");
-    console.log("el receptor es:", receptorId);
-    
-
-    // Función para iniciar la videollamada
-    async function startVideoCall() {
-        try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            console.log("Local stream obtained");
-            console.log("Local stream tracks: ", localStream.getTracks());
-            smallVideoElement.srcObject = localStream;
-            
-            // Emitir el evento para iniciar la llamada
-            socket.emit('iniciar llamada', { 
-                emisor: currentUserId, 
-                receptor: receptorId, 
-                nombreEmisor: username, // Replace with the actual user's name if needed
-            });
-    
-            startCall();
-        } catch (error) {
-            console.error("Error al acceder a la cámara y micrófono: ", error);
-            alert("No se pudo acceder a la cámara y micrófono. Verifica los permisos.");
-        }
-    }
-    
-
-    startVideoCall();
 
     const configuration = {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     };
 
+    async function startVideoCall() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            smallVideoElement.srcObject = localStream;
+            smallVideoElement.muted = true; // Mute local video element to avoid echo
+
+            socket.emit('iniciar llamada', {
+                emisor: currentUserId,
+                receptor: receptorId,
+                nombreEmisor: username,
+            });
+
+            startCall();
+        } catch (error) {
+            console.error("Error al acceder a la cámara y micrófono:", error);
+            alert("No se pudo acceder a la cámara y micrófono. Verifica los permisos.");
+        }
+    }
+
     function createPeerConnection() {
         peerConnection = new RTCPeerConnection(configuration);
 
+        // Agregar todas las pistas locales (video y audio)
         localStream.getTracks().forEach(track => {
+            console.log('Adding local track:', track);
             peerConnection.addTrack(track, localStream);
-            console.log("Added local track: ", track);
         });
 
+        // Configurar recepción de pistas remotas
         peerConnection.ontrack = (event) => {
-            console.log("Received remote track: ", event.track);
+            console.log('Remote track received:', event.streams[0]);
             event.streams[0].getTracks().forEach(track => {
+                console.log('Adding remote track:', track);
+                if (track.kind === 'audio') {
+                    console.log('Audio track info:', track.getSettings());
+                }
                 remoteStream.addTrack(track);
-                console.log("Added track to remoteStream: ", track);
             });
-            console.log("Remote stream tracks: ", remoteStream.getTracks());
             videoElement.srcObject = remoteStream;
+
+            // Asignar la pista de audio al elemento de vídeo
+            const audioTracks = remoteStream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                const audioElement = new Audio();
+                audioElement.srcObject = new MediaStream(audioTracks);
+                audioElement.play();
+            }
         };
-        
 
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log("Sending ICE candidate: ", event.candidate);
                 socket.emit('ice-candidate', { candidate: event.candidate, receptor: receptorId });
             }
         };
@@ -83,41 +85,41 @@ setTimeout(() => {
     function startCall() {
         createPeerConnection();
         peerConnection.createOffer()
-            .then(offer => {
-                console.log("Created offer: ", offer);
-                return peerConnection.setLocalDescription(offer);
-            })
+            .then(offer => peerConnection.setLocalDescription(offer))
             .then(() => {
-                console.log("Receptor ID al iniciar llamada:", receptorId);
-                console.log("Local description set: ", peerConnection.localDescription);
-                socket.emit('video-offer', { offer: peerConnection.localDescription, receptor: receptorId, emisor: currentUserId });
-                console.log("Sent video offer");
+                socket.emit('video-offer', {
+                    offer: peerConnection.localDescription,
+                    receptor: receptorId,
+                    emisor: currentUserId
+                });
             })
-            .catch(error => console.error("Error creando la oferta: ", error));
+            .catch(error => console.error("Error creando la oferta:", error));
     }
 
     socket.on('video-offer', (data) => {
         receptorId = data.emisor;
         createPeerConnection();
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
+            .then(() => peerConnection.createAnswer())
+            .then(answer => peerConnection.setLocalDescription(answer))
             .then(() => {
-                return peerConnection.createAnswer();
-            })
-            .then(answer => {
                 socket.emit('video-answer', { answer: peerConnection.localDescription, receptor: data.emisor });
-            });
+            })
+            .catch(error => console.error("Error al procesar video-offer:", error));
     });
 
     socket.on('video-answer', (data) => {
-        console.log("Received video answer: ", data);
-        peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer))
-            .catch(error => console.error("Error al establecer RemoteDescription: ", error));
+        if (data.answer) {
+            peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer))
+                .catch(error => console.error("Error al establecer RemoteDescription:", error));
+        }
     });
 
     socket.on('ice-candidate', (data) => {
-        console.log("Received ICE candidate: ", data.candidate);
-        peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
-            .catch(error => console.error("Error agregando ICE candidate: ", error));
+        if (data.candidate) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
+                .catch(error => console.error("Error agregando ICE candidate:", error));
+        }
     });
 
     document.getElementById("boton-colgar").addEventListener("click", () => {
@@ -142,4 +144,24 @@ setTimeout(() => {
         }
         window.location.href = "chats.html";
     });
+
+    // Botón de silenciar micrófono
+    document.getElementById('mute-button').addEventListener('click', () => {
+        const audioTracks = localStream.getAudioTracks();
+        if (audioTracks.length > 0) {
+            audioTracks[0].enabled = !audioTracks[0].enabled;
+            console.log('Microphone ' + (audioTracks[0].enabled ? 'enabled' : 'disabled'));
+        }
+    });
+
+    // Botón de apagar cámara
+    document.getElementById('video-button').addEventListener('click', () => {
+        const videoTracks = localStream.getVideoTracks();
+        if (videoTracks.length > 0) {
+            videoTracks[0].enabled = !videoTracks[0].enabled;
+            console.log('Camera ' + (videoTracks[0].enabled ? 'enabled' : 'disabled'));
+        }
+    });
+
+    startVideoCall();
 });
