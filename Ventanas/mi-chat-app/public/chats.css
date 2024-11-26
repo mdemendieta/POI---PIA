@@ -230,6 +230,12 @@ body {
     overflow-y: auto; /* Permitir desplazamiento vertical solo cuando sea necesario */
 }
 
+
+.btn-active {
+    background-color: #007bff; /* Cambia el color de fondo */
+    color: white; /* Cambia el color del icono */
+}
+
 .chat .chat-history ul {
     padding: 0;
 }

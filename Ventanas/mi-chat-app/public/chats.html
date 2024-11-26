@@ -114,7 +114,7 @@
                         </div>
                         <div class="chat-message clearfix">
                             <div class="input-group">
-                                <input type="text" class="form-control message-input"
+                                <input id="inputtexto" type="text" class="form-control message-input"
                                     placeholder="Escribe tu mensaje aquí...">
                                 <div
                                     class="input-group-append d-flex align-items-center justify-content-end icon-group">
@@ -137,10 +137,12 @@
                                                 </div>
                                             </li>
                                             <li>
-                                                <div class="item-content-attach">
+                                                <div id="imagen" class="item-content-attach">
                                                     <i class="fa fa-video-camera icon"></i>
-                                                    <span class="text">Video</span>
+                                                    <span class="text">Imagen</span>
                                                 </div>
+                                                <input type="file" id="file-input" style="display: none;"
+                                                    accept="image/*">
                                             </li>
                                             <li>
                                                 <div id="ubicacion" class="item-content-attach">
@@ -366,7 +368,7 @@
         socket.emit("user connected", localStorage.getItem("userID"));
 
         // Almacena el nombre de usuario 
-        const username = localStorage.getItem("nombreUsuario"); 
+        const username = localStorage.getItem("nombreUsuario");
 
         // Llamar a la función para cargar contactos al cargar la página
         $(document).ready(function () {
@@ -374,13 +376,22 @@
         });
 
 
-        // Función para manejar el envío de mensajes
-        function sendMessage() {
+        let emailEncryptionActive = false;
+
+        // Event listener para alternar el estado al hacer clic en el botón de correo
+        document.querySelector('.email-button').addEventListener('click', () => {
+            emailEncryptionActive = !emailEncryptionActive;
+            console.log(`Encriptación activa: ${emailEncryptionActive}`);
+        });
+        // Función actualizada de enviar mensaje
+        function sendMessagetexto() {
             const inputField = document.querySelector('.message-input');
             const message = inputField.value.trim();
             const id_Usuario_Emisor = localStorage.getItem('userID');
             const id_Grupo = esGrupo ? currentContactId : null;
             const id_Usuario_Receptor = !esGrupo ? currentContactId : null;
+            const tipo_contenido = 1;
+            const encriptacion = emailEncryptionActive ? 1 : 0; // Define el valor de encriptación
 
             if (message) {
                 inputField.value = '';
@@ -389,8 +400,10 @@
                     Contenido: message,
                     id_Usuario_Receptor,
                     id_Grupo,
-                    nombreEmisor: localStorage.getItem('nombreUsuario'), // Asegúrate de que este valor esté disponible
-                    fotoEmisor: localStorage.getItem('fotoUsuario') // Asegúrate de que este valor esté disponible
+                    nombreEmisor: localStorage.getItem('nombreUsuario'),
+                    fotoEmisor: localStorage.getItem('fotoUsuario'),
+                    tipo_contenido,
+                    encriptacion // Incluimos el campo de encriptación
                 };
 
                 $.post('/api/mensajes', dataToSend, function (data) {
@@ -595,12 +608,12 @@
 
 
         // Manejar el evento de clic en el botón de envío
-        document.querySelector('.send-button').addEventListener('click', sendMessage);
+        document.querySelector('.send-button').addEventListener('click', sendMessagetexto);
 
         // Manejar el evento de presionar Enter en el campo de entrada
         document.querySelector('.message-input').addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
-                sendMessage();
+                sendMessagetexto();
             }
         });
 
@@ -699,6 +712,60 @@
             event.preventDefault();
             const attachMenu = document.getElementById('attach-menu');
             attachMenu.style.display = attachMenu.style.display === 'block' ? 'none' : 'block';
+        });
+
+
+
+
+        // boton adjuntar imagen
+        const imageButton = document.getElementById("imagen");
+        const fileInput = document.getElementById("file-input");
+
+
+        imageButton.addEventListener("click", () => {
+            fileInput.click();
+            // Abre el selector de archivos al hacer clic en el botón
+        });
+        //logica para envio de imagenes enviar imagenes
+        $('#inputImagen').on('change', function (event) {
+            const archivoImagen = event.target.files[0];
+
+            if (!archivoImagen) {
+                alert("Por favor selecciona una imagen.");
+                return;
+            }
+
+            const id_Usuario_Emisor = localStorage.getItem('userID');
+            const id_Grupo = esGrupo ? currentContactId : null;
+            const id_Usuario_Receptor = !esGrupo ? currentContactId : null;
+
+            if (!id_Usuario_Emisor || (!id_Grupo && !id_Usuario_Receptor)) {
+                alert("Hubo un problema al identificar el remitente o el destinatario.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', archivoImagen);
+            formData.append('id_Usuario_Emisor', id_Usuario_Emisor);
+            formData.append('id_Grupo', id_Grupo);
+            formData.append('id_Usuario_Receptor', id_Usuario_Receptor);
+            formData.append('tipoContenido', 2); // Tipo 2 para imágenes
+
+            $.ajax({
+                url: '/api/mensajes',
+                type: 'POST',
+                data: formData,
+                processData: false, // Necesario para enviar datos de archivo
+                contentType: false, // Evita que se establezca un tipo de contenido predeterminado
+                success: function (response) {
+                    console.log("Mensaje con imagen enviado:", response);
+                    scrollToBottom();
+                },
+                error: function (jqXHR) {
+                    const errorMessage = jqXHR.responseJSON ? jqXHR.responseJSON.error : "Error al enviar el mensaje con imagen.";
+                    alert(errorMessage);
+                }
+            });
         });
 
 

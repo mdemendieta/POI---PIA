@@ -1,4 +1,5 @@
 const express = require('express');
+const fileUpload = require('express-fileupload');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -8,6 +9,7 @@ require('dotenv').config(); // Cargar variables de entorno
 
 const app = express();
 app.use(cors());
+
 const server = http.createServer(app);
 const io = new Server(server);
 
@@ -190,32 +192,28 @@ app.get('/api/conversacion/:contactId', async (req, res) => {
         // Procesar cada mensaje de forma asíncrona
         for (let i = 0; i < results.length; i++) {
             const mensaje = results[i];
-            if (mensaje.encriptacion === 1) {
-                // Desencriptar mensaje si encriptacion es 1
-                await new Promise((resolve, reject) => {
-                    connection.query('CALL sp_desencriptarmensaje(?,@mensaje_desencriptado)', [mensaje.texto,null], (err) => {
+
+            // Llamar al procedimiento almacenado con el valor de encriptacion
+            await new Promise((resolve, reject) => {
+                connection.query('CALL sp_desencriptarmensaje(?, ?, @mensaje_desencriptado)', [mensaje.texto, mensaje.encriptacion], (err) => {
+                    if (err) {
+                        console.error('Error al desencriptar mensaje:', err);
+                        return reject(err);
+                    }
+
+                    // Luego de que el procedimiento se haya ejecutado, obtenemos el valor de @mensaje_desencriptado
+                    connection.query('SELECT @mensaje_desencriptado AS mensaje_desencriptado', (err, desencriptadoResults) => {
                         if (err) {
-                            console.error('Error al desencriptar mensaje:', err);
+                            console.error('Error al obtener el mensaje desencriptado:', err);
                             return reject(err);
                         }
-                    
-                        // Luego de que el procedimiento se haya ejecutado, ejecutamos el SELECT para obtener el valor de @mensaje_desencriptado
-                        connection.query('SELECT @mensaje_desencriptado AS mensaje_desencriptado', (err, desencriptadoResults) => {
-                            if (err) {
-                                console.error('Error al obtener el mensaje desencriptado:', err);
-                                return reject(err);
-                            }
-                    
-                            // Asigna el mensaje desencriptado al objeto mensaje
-                            mensaje.texto = desencriptadoResults[0].mensaje_desencriptado;
-                            resolve();
-                        });
+
+                        // Asigna el mensaje desencriptado al objeto mensaje
+                        mensaje.texto = desencriptadoResults[0].mensaje_desencriptado;
+                        resolve();
                     });
-
-
-
                 });
-            }
+            });
         }
 
         res.json(results);  // Devolver los resultados con los mensajes ya desencriptados si es necesario
@@ -228,17 +226,20 @@ app.get('/api/conversacion/:contactId', async (req, res) => {
 
 // Endpoint para enviar un mensaje
 app.post('/api/mensajes', (req, res) => {
-    const { id_Usuario_Emisor, id_Usuario_Receptor, Contenido, id_Grupo } = req.body;
+    const { id_Usuario_Emisor, id_Usuario_Receptor, Contenido, id_Grupo, tipo_contenido, encriptacion } = req.body;
 
-    if (!id_Usuario_Emisor || !Contenido) {
+    if (!id_Usuario_Emisor || !Contenido || encriptacion === undefined) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
+    // Añadir la encriptación al query (suponiendo que sea un TINYINT)
     const query = id_Grupo
-        ? `INSERT INTO Mensaje (id_Usuario_Emisor, id_Usuario_Receptor, Contenido, Fecha_Hora, id_Grupo) VALUES (?, NULL, ?, NOW(), ?)`
-        : `INSERT INTO Mensaje (id_Usuario_Emisor, id_Usuario_Receptor, Contenido, Fecha_Hora) VALUES (?, ?, ?, NOW())`;
+        ? `INSERT INTO Mensaje (id_Usuario_Emisor, id_Usuario_Receptor, Contenido, Fecha_Hora, id_Grupo, tipo_contenido, encriptacion) VALUES (?, NULL, ?, NOW(), ?, ?, ?)`
+        : `INSERT INTO Mensaje (id_Usuario_Emisor, id_Usuario_Receptor, Contenido, Fecha_Hora, tipo_contenido, encriptacion) VALUES (?, ?, ?, NOW(), ?, ?)`;
 
-    const params = id_Grupo ? [id_Usuario_Emisor, Contenido, id_Grupo] : [id_Usuario_Emisor, id_Usuario_Receptor, Contenido];
+    const params = id_Grupo 
+        ? [id_Usuario_Emisor, Contenido, id_Grupo, tipo_contenido, encriptacion]
+        : [id_Usuario_Emisor, id_Usuario_Receptor, Contenido, tipo_contenido, encriptacion];
 
     connection.query(query, params, (err, result) => {
         if (err) {
@@ -252,7 +253,9 @@ app.post('/api/mensajes', (req, res) => {
             Contenido,
             fecha: new Date().toLocaleDateString(),
             hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
-            id_Grupo
+            id_Grupo,
+            tipo_contenido,
+            encriptacion // Agregamos el campo de encriptación al objeto del mensaje
         };
 
         if (id_Grupo) {
@@ -269,7 +272,45 @@ app.post('/api/mensajes', (req, res) => {
 });
 
 
+app.post('/api/mensajes', upload.single('file'), (req, res) => {
+    const { id_Usuario_Emisor, id_Usuario_Receptor, id_Grupo, tipo_Contenido, encriptacion } = req.body;
+    const contenido = req.file ? req.file.filename : req.body.Contenido; // Considerar mensajes con o sin archivos
 
+    if (!id_Usuario_Emisor || contenido === undefined || encriptacion === undefined) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+        console.log(encriptacion);
+
+    const query = id_Usuario_Receptor
+        ? `INSERT INTO Mensaje (id_Usuario_Emisor, id_Usuario_Receptor, Contenido, tipo_contenido, encriptacion, Fecha_Hora) VALUES (?, ?, ?, ?, ?, NOW())`
+        : `INSERT INTO Mensaje (id_Usuario_Emisor, id_Grupo, Contenido, tipo_contenido, encriptacion, Fecha_Hora) VALUES (?, ?, ?, ?, ?, NOW())`;
+
+    const params = id_Usuario_Receptor
+        ? [id_Usuario_Emisor, id_Usuario_Receptor, contenido, tipo_Contenido, encriptacion]
+        : [id_Usuario_Emisor, id_Grupo, contenido, tipo_Contenido, encriptacion];
+
+    connection.query(query, params, (err, result) => {
+        if (err) {
+            console.error("Error al guardar el mensaje en la base de datos:", err);
+            return res.status(500).json({ error: "Error al guardar el mensaje en la base de datos" });
+        }
+
+        res.status(201).json({ message: "Mensaje enviado exitosamente", id_Mensaje: result.insertId });
+
+        // Emitir el mensaje al socket si es necesario
+        io.emit('nuevoMensaje', {
+            id_Mensaje: result.insertId,
+            id_Usuario_Emisor,
+            id_Usuario_Receptor,
+            id_Grupo,
+            contenido,
+            tipoContenido,
+            encriptacion,
+            hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
+        });
+    });
+});
 
 app.post('/api/grupos', upload.single('foto'), (req, res) => {
     const { nombre, miembros, creadorId } = req.body; // Obtener los datos del cuerpo de la solicitud

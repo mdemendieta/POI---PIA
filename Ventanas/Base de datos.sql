@@ -26,11 +26,15 @@ CREATE TABLE Mensaje (
     id_Mensaje INT AUTO_INCREMENT PRIMARY KEY,
     id_Usuario_Emisor INT NOT NULL,       -- ID del usuario que envía el mensaje
     id_Usuario_Receptor INT NOT NULL,     -- ID del usuario que recibe el mensaje
-    Contenido TEXT NOT NULL,              -- Contenido del mensaje
+    Contenido blob default null,              -- Contenido del mensaje
     Fecha_Hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Fecha y hora del mensaje
+    tipo_contenido int not null,
+    encriptacion int,
+    foto varchar(255),
     FOREIGN KEY (id_Usuario_Emisor) REFERENCES Usuario(id_Usuario) ON DELETE CASCADE,
     FOREIGN KEY (id_Usuario_Receptor) REFERENCES Usuario(id_Usuario) ON DELETE CASCADE
 );
+
 
 CREATE TABLE Grupo (
     id_Grupo INT AUTO_INCREMENT PRIMARY KEY,
@@ -176,13 +180,15 @@ BEFORE INSERT ON Mensaje
 FOR EACH ROW
 BEGIN
     -- Verifica si el valor de 'encriptacion' es 1
-    IF NEW.encriptacion = 1 THEN
-        -- Llama al procedimiento almacenado para encriptar el mensaje
-        CALL sp_encriptarmensaje(NEW.Contenido, @mensajeEncriptado);
-        
-        -- Asigna el mensaje encriptado al campo 'Contenido'
-        SET NEW.Contenido = @mensajeEncriptado;
-    END IF;
+   IF NEW.tipo_contenido =1 then 
+		IF NEW.encriptacion = 1 THEN
+			-- Llama al procedimiento almacenado para encriptar el mensaje
+			CALL sp_encriptarmensaje(NEW.Contenido, @mensajeEncriptado);
+			
+			-- Asigna el mensaje encriptado al campo 'Contenido'
+			SET NEW.Contenido = @mensajeEncriptado;
+		END IF;
+	END IF;
 END //
 
 DELIMITER ;
@@ -196,11 +202,18 @@ DELIMITER //
 
 CREATE PROCEDURE sp_desencriptarmensaje(
     IN mensaje_encriptado BLOB, 
+    IN encriptacion INT,  -- Recibimos el valor de encriptacion
     OUT mensaje_desencriptado VARCHAR(255)
 )
 BEGIN
-    -- Desencripta el mensaje usando la misma clave secreta
-    SET mensaje_desencriptado = AES_DECRYPT(mensaje_encriptado, 'mi_clave_secreta');
+    -- Verificamos si la encriptacion es 1 o 0
+    IF encriptacion = 1 THEN
+        -- Desencripta el mensaje usando la misma clave secreta
+        SET mensaje_desencriptado = AES_DECRYPT(mensaje_encriptado, 'mi_clave_secreta');
+    ELSE
+        -- Si encriptacion es 0, convertimos el mensaje binario a texto
+        SET mensaje_desencriptado = CONVERT(mensaje_encriptado USING utf8);
+    END IF;
     
 END //
 
@@ -208,6 +221,8 @@ DELIMITER ;
 
 
 
+
+drop procedure sp_desencriptarmensaje;
 alter table mensaje add column encriptacion int default 1;
 call sp_desencriptarmensaje('ipmb');
 drop procedure sp_encriptarmensaje;
@@ -229,4 +244,15 @@ SELECT @mensaje_desencriptado AS mensaje_desencriptado;
 
 
 ALTER TABLE Mensaje MODIFY COLUMN Contenido BLOB NULL;
+
+
+INSERT INTO Mensaje (id_Usuario_Emisor, id_Usuario_Receptor, Contenido, tipo_Contenido, encriptacion, Fecha_Hora) 
+VALUES (1, 6, "hola hola", 1, 0, NOW());
+
+ INSERT INTO Mensaje (id_Usuario_Emisor, id_Usuario_Receptor, Contenido, tipo_contenido, encriptacion, Fecha_Hora)
+ VALUES (1, 6, "hola hola", 1, 0, NOW());
  
+ select * from mensaje;
+ truncate table mensaje;
+ ALTER TABLE Mensaje
+MODIFY encriptacion TINYINT(1) not null;
